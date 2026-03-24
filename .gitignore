@@ -118,6 +118,6 @@ temp/
 metrics.json
 
 # ======================
-# Build Planning (not for public repo)
+# Misc
 # ======================
 .planning/
