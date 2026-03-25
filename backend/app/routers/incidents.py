@@ -28,6 +28,8 @@ def _next_incident_id(db: Session) -> str:
 @router.get("/", response_model=list[IncidentResponseEnriched])
 def list_incidents(
     status: Optional[str] = Query(None, description="Filter by incident status"),
+    skip: int = Query(0, ge=0, description="Records to skip"),
+    limit: int = Query(50, ge=1, le=200, description="Max records to return"),
     db: Session = Depends(get_db),
 ):
     """List incidents with enriched employee and shift details."""
@@ -36,7 +38,7 @@ def list_incidents(
     if status is not None:
         query = query.filter(Incident.status == status)
 
-    incidents = query.all()
+    incidents = query.offset(skip).limit(limit).all()
     result = []
     for inc in incidents:
         data = IncidentResponseEnriched.model_validate(inc).model_dump()

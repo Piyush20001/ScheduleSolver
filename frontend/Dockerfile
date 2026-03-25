@@ -1,14 +1,32 @@
-FROM node:18-alpine
+# Stage 1: Build
+FROM node:18-alpine AS builder
 
 WORKDIR /app
 
-# Install dependencies first (layer caching)
 COPY package*.json ./
-RUN npm install
+RUN npm ci
 
-# Copy application code
 COPY . .
+RUN npm run build
 
-EXPOSE 5173
+# Stage 2: Serve with nginx
+FROM nginx:alpine
 
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+# Copy built assets
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Copy nginx config for SPA routing
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Run as non-root user
+RUN adduser -D -H appuser && \
+    chown -R appuser:appuser /usr/share/nginx/html && \
+    chown -R appuser:appuser /var/cache/nginx && \
+    chown -R appuser:appuser /var/log/nginx && \
+    touch /var/run/nginx.pid && \
+    chown appuser:appuser /var/run/nginx.pid
+USER appuser
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]

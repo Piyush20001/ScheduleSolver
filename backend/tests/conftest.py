@@ -125,7 +125,7 @@ def seed_employees(client):
                 name="Bob Bartender",
                 email="bob@test.com",
                 phone="555-0002",
-                role="bartender",
+                role="barista",
                 skill_level=3,
                 reliability_score=0.75,
                 prefers_morning=False,
@@ -181,7 +181,7 @@ def seed_shifts(client, seed_employees):
                 start_time="14:00",
                 end_time="22:00",
                 shift_type="evening",
-                role_required="bartender",
+                role_required="barista",
                 min_skill_level=1,
                 is_weekend=False,
                 assigned_employee_id=None,  # Unassigned

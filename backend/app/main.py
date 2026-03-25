@@ -1,5 +1,7 @@
 """FastAPI application for ScheduleSolver v2."""
 
+import os
+
 from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.websockets import WebSocketDisconnect
@@ -9,11 +11,16 @@ from app.websocket import manager
 
 app = FastAPI(title="ScheduleSolver", version="2.0.0", docs_url="/docs", redoc_url="/redoc")
 
-# CORS -- allow all origins in development
+# CORS -- explicit origins from env var (default covers dev ports)
+ALLOWED_ORIGINS = os.getenv(
+    "ALLOWED_ORIGINS",
+    "http://localhost:3000,http://localhost:5173"
+).split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=ALLOWED_ORIGINS,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )

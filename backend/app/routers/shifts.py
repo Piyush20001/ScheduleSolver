@@ -17,6 +17,8 @@ router = APIRouter(prefix="/api/shifts", tags=["Shifts"])
 def list_shifts(
     start_date: Optional[date] = Query(None, description="Filter shifts on or after this date"),
     end_date: Optional[date] = Query(None, description="Filter shifts on or before this date"),
+    skip: int = Query(0, ge=0, description="Records to skip"),
+    limit: int = Query(50, ge=1, le=200, description="Max records to return"),
     db: Session = Depends(get_db),
 ):
     """List shifts with optional date range filter and enriched employee name."""
@@ -27,7 +29,7 @@ def list_shifts(
     if end_date is not None:
         query = query.filter(Shift.date <= end_date)
 
-    shifts = query.all()
+    shifts = query.offset(skip).limit(limit).all()
     result = []
     for shift in shifts:
         data = ShiftResponseEnriched.model_validate(shift).model_dump()

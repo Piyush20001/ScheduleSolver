@@ -1,24 +1,33 @@
 """Pydantic v2 request/response schemas for ScheduleSolver."""
 
 from datetime import date, datetime
-from typing import Optional
+from typing import Literal, Optional
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
+
+# --- Literal type aliases for constrained enum fields ---
+
+RoleType = Literal["server", "cook", "cashier", "barista", "host", "manager", "general"]
+ShiftStatus = Literal["scheduled", "open", "completed", "cancelled", "covered"]
+ShiftType = Literal["morning", "afternoon", "evening"]
+IncidentStatus = Literal["open", "in_progress", "resolved", "escalated"]
+IncidentUrgency = Literal["critical", "high", "medium", "low"]
+CallStatus = Literal["pending", "calling", "accepted", "declined", "no_answer"]
 
 
 # --- Employee schemas ---
 
 class EmployeeBase(BaseModel):
-    name: str
-    email: str
-    phone: str
-    role: str
-    skill_level: int = 1
-    reliability_score: float = 0.7
+    name: str = Field(min_length=1, max_length=100)
+    email: str = Field(min_length=5, max_length=255)
+    phone: str = Field(min_length=1, max_length=30)
+    role: RoleType
+    skill_level: int = Field(default=1, ge=1, le=5)
+    reliability_score: float = Field(default=0.7, ge=0.0, le=1.0)
     prefers_morning: bool = False
     prefers_evening: bool = False
     weekend_available: bool = False
-    max_hours_weekly: int = 40
+    max_hours_weekly: int = Field(default=40, ge=1, le=168)
     is_active: bool = True
     hired_date: date
 
@@ -38,13 +47,13 @@ class EmployeeResponse(EmployeeBase):
 
 class ShiftBase(BaseModel):
     date: date
-    start_time: str
-    end_time: str
-    shift_type: str
-    role_required: str
-    min_skill_level: int = 1
+    start_time: str = Field(min_length=1, max_length=10)
+    end_time: str = Field(min_length=1, max_length=10)
+    shift_type: ShiftType
+    role_required: RoleType
+    min_skill_level: int = Field(default=1, ge=1, le=5)
     is_weekend: bool = False
-    status: str = "scheduled"
+    status: ShiftStatus = Field(default="scheduled")
 
 
 class ShiftCreate(ShiftBase):
@@ -61,12 +70,12 @@ class ShiftResponse(ShiftBase):
 # --- Incident schemas ---
 
 class IncidentBase(BaseModel):
-    incident_id: str
+    incident_id: str = Field(min_length=1, max_length=20)
     shift_id: int
     original_employee_id: int
-    reason: str
-    urgency: str
-    status: str = "open"
+    reason: str = Field(min_length=1, max_length=500)
+    urgency: IncidentUrgency
+    status: IncidentStatus = Field(default="open")
 
 
 class IncidentCreate(IncidentBase):
@@ -88,7 +97,7 @@ class CallLogBase(BaseModel):
     incident_id: int
     employee_id: int
     call_order: int
-    status: str
+    status: CallStatus
     ml_score: float
     call_started_at: datetime
     call_ended_at: Optional[datetime] = None
@@ -116,8 +125,8 @@ class IncidentCreateRequest(BaseModel):
 
     shift_id: int
     original_employee_id: int
-    reason: str
-    urgency: str
+    reason: str = Field(min_length=1, max_length=500)
+    urgency: IncidentUrgency
 
 
 class IncidentResponseEnriched(IncidentResponse):
@@ -192,12 +201,12 @@ class EmployeePerformanceResponse(BaseModel):
 
 
 class AgentChatHistoryMessage(BaseModel):
-    role: str  # "user" or "assistant"
-    content: str
+    role: Literal["user", "assistant"]
+    content: str = Field(max_length=5000)
 
 
 class AgentChatRequest(BaseModel):
-    message: str
+    message: str = Field(min_length=1, max_length=2000)
     history: list[AgentChatHistoryMessage] = []
 
 

@@ -212,8 +212,12 @@ class ScheduleAgent:
         # Build messages array
         messages: list[dict] = [{"role": "system", "content": SYSTEM_PROMPT}]
         for h in history:
-            messages.append({"role": h["role"], "content": h["content"]})
-        messages.append({"role": "user", "content": message})
+            # Sanitize history: strip tool_call tags that could trigger tool execution
+            sanitized_content = re.sub(r'</?tool_call>', '', h["content"]).strip()
+            messages.append({"role": h["role"], "content": sanitized_content})
+        # Sanitize user input: strip tool_call tags that could trigger tool execution
+        sanitized_message = re.sub(r'</?tool_call>', '', message).strip()
+        messages.append({"role": "user", "content": sanitized_message})
 
         tools_used: set[str] = set()
         final_content = ""

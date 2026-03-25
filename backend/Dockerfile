@@ -12,6 +12,11 @@ COPY . .
 # Create data directory for SQLite DB
 RUN mkdir -p data
 
+# Run as non-root user
+RUN adduser --disabled-password --no-create-home appuser && \
+    chown -R appuser:appuser /app
+USER appuser
+
 EXPOSE 8000
 
 # run.py handles first-run setup (train model, seed DB) and starts uvicorn
